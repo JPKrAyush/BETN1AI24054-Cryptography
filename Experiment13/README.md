@@ -1,20 +1,12 @@
 # Experiment 13: Password Auditing Using John the Ripper
 
-## Aim
+## 1. Aim
 
 To perform password auditing using John the Ripper and evaluate password strength by identifying weak passwords through dictionary-based password cracking.
 
-## Objectives
+## 2. Software and Tools Required
 
-1. Understand password security and authentication.
-2. Learn how John the Ripper works.
-3. Perform password auditing using dictionary attacks.
-4. Identify weak passwords.
-5. Recommend techniques for creating strong passwords.
-
-## Tools and Environment
-
-- macOS on Apple Silicon
+- macOS (Apple Silicon)
 - Terminal
 - Homebrew
 - John the Ripper Jumbo 1.9.0
@@ -23,35 +15,55 @@ To perform password auditing using John the Ripper and evaluate password strengt
 
 > **Scope:** This practical uses only three locally generated sample passwords and their hashes. No real user accounts or credentials were tested.
 
-## Installation
+## 3. Theory
 
-Homebrew was already installed. The standard Homebrew `john` package did not recognize the `Raw-MD5` format in this environment, so it was replaced with the Jumbo build:
+### A. Password Auditing
+
+Password auditing is the process of testing stored password hashes to find weak or easily guessed passwords. It helps administrators identify accounts that need stronger passwords.
+
+### B. John the Ripper
+
+John the Ripper is an open-source password auditing tool. It supports many hash formats and provides several cracking modes:
+
+- **Single crack mode:** Uses usernames and related information as guesses.
+- **Wordlist mode:** Tries every password in a dictionary file.
+- **Incremental mode:** Tries all character combinations (brute force).
+
+The **Jumbo** version adds support for more hash formats, including `Raw-MD5`.
+
+### C. MD5 Hashing
+
+MD5 produces a 128-bit hash value. It is very fast, which makes it easy to test millions of guesses per second. This makes it unsuitable for storing real passwords.
+
+### D. Dictionary Attack
+
+A dictionary attack hashes each word from a wordlist and compares the result with the target hash. The **RockYou** wordlist contains millions of real passwords from a historical data leak and is commonly used in password auditing.
+
+## 4. Working Procedure and Commands
+
+### Step 1: Install John the Ripper Jumbo
+
+The standard Homebrew `john` package did not support the `Raw-MD5` format, so it was replaced with the Jumbo build:
 
 ```bash
 brew uninstall john
 brew install john-jumbo
 ```
 
-The supported hash formats were checked with:
+Verify that the `Raw-MD5` format is available:
 
 ```bash
 john --list=formats | grep -i md5
 ```
 
-The output included `Raw-MD5`, confirming that the required format was available.
-
-## Procedure
-
-### 1. Create the experiment directory
+### Step 2: Create the experiment directory
 
 ```bash
 mkdir -p ~/Desktop/CryptoGithutPractical/Experiment13
 cd ~/Desktop/CryptoGithutPractical/Experiment13
 ```
 
-### 2. Generate sample MD5 hashes
-
-The following sample passwords were used:
+### Step 3: Generate sample MD5 hashes
 
 ```bash
 echo -n "password123" | md5
@@ -59,17 +71,15 @@ echo -n "admin123" | md5
 echo -n "Cyber@2026" | md5
 ```
 
-The generated hashes were:
-
-| Username | Sample password | MD5 hash |
+| Username | Sample Password | MD5 Hash |
 |---|---|---|
 | user1 | `password123` | `482c811da5d5b4bc6d497ffa98491e38` |
 | user2 | `admin123` | `0192023a7bbd73250516f069df18b500` |
 | user3 | `Cyber@2026` | `5fa55c6901f19e8129bbe67fdd07406a` |
 
-### 3. Create the hash file
+### Step 4: Create the hash file
 
-The hashes were saved in `hashes.txt` using the username-and-hash format:
+Save the hashes in `hashes.txt` using the `username:hash` format:
 
 ```text
 user1:482c811da5d5b4bc6d497ffa98491e38
@@ -77,65 +87,51 @@ user2:0192023a7bbd73250516f069df18b500
 user3:5fa55c6901f19e8129bbe67fdd07406a
 ```
 
-To inspect the file:
-
 ```bash
 cat hashes.txt
 ```
 
-### 4. Perform the initial password audit
+### Step 5: Perform the initial password audit
 
 ```bash
 john --format=Raw-MD5 hashes.txt
 ```
 
-John loaded all three hashes. The initial run tried its default single, wordlist, and incremental modes. The incremental attempt was manually stopped, so this initial run was not treated as a completed exhaustive audit.
+John loaded all three hashes and ran its default single, wordlist, and incremental modes. The incremental run was stopped manually.
 
-The recovered password at this stage was checked with:
+Display the recovered passwords:
 
 ```bash
 john --show --format=Raw-MD5 hashes.txt
 ```
 
-At that point, `admin123` was recovered for `user2`.
+At this stage, `admin123` was recovered for `user2`.
 
-### 5. Download and extract the RockYou wordlist
-
-The RockYou archive was downloaded from the SecLists repository:
+### Step 6: Download and extract the RockYou wordlist
 
 ```bash
 curl -L -o rockyou.txt.tar.gz https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Leaked-Databases/rockyou.txt.tar.gz
-```
-
-Extract the archive:
-
-```bash
 tar -xzf rockyou.txt.tar.gz
-```
-
-Verify the extracted file:
-
-```bash
 ls -lh rockyou.txt
 ```
 
-The extracted `rockyou.txt` file was approximately 133 MB in this run.
+The extracted `rockyou.txt` file was approximately 133 MB.
 
-### 6. Perform the dictionary-based audit
+### Step 7: Perform the dictionary attack
 
 ```bash
 john --wordlist=rockyou.txt --format=Raw-MD5 hashes.txt
 ```
 
-John loaded the three sample hashes and found `password123` for `user1` in the RockYou wordlist. The dictionary session completed successfully.
+John found `password123` for `user1` in the RockYou wordlist.
 
-### 7. Display the final recovered passwords
+### Step 8: Display the final recovered passwords
 
 ```bash
 john --show --format=Raw-MD5 hashes.txt
 ```
 
-Final observed output:
+**Output:**
 
 ```text
 user1:password123
@@ -144,62 +140,65 @@ user2:admin123
 2 password hashes cracked, 1 left
 ```
 
-## Screenshots
+## 5. Screenshots
 
-The screenshots below are arranged in the order of the practical procedure.
+### 1. MD5 Hash Generation and Hash File
 
-| Screenshot | Description |
-|---|---|
-| [01 - MD5 Hash Generation and Hash File](Screenshots/01_MD5_Hash_Generation_and_Hashes_File.png) | Generation of the three MD5 hashes and contents of `hashes.txt`. |
-| [02 - Initial John the Ripper Audit](Screenshots/02_Initial_John_the_Ripper_Audit.png) | John loading the three hashes and running its initial audit modes. |
-| [03 - Initial Cracked Password](Screenshots/03_Initial_Cracked_Password_admin123.png) | Initial `--show` output identifying `admin123` for `user2`. |
-| [04 - RockYou Wordlist](Screenshots/04_RockYou_Wordlist_Download_and_Extraction.png) | Download, extraction, and file-size verification of `rockyou.txt`. |
-| [05 - Dictionary Attack](Screenshots/05_RockYou_Dictionary_Attack.png) | RockYou dictionary attack recovering `password123` for `user1`. |
-| [06 - Final Recovered Passwords](Screenshots/06_Final_Recovered_Passwords.png) | Final `--show` output reporting two cracked hashes and one remaining. |
+![MD5 Hash Generation and Hash File](Screenshots/01_MD5_Hash_Generation_and_Hashes_File.png)
 
-## Observation Table
+### 2. Initial John the Ripper Audit
 
-The following table records the actual results from this execution:
+![Initial John the Ripper Audit](Screenshots/02_Initial_John_the_Ripper_Audit.png)
 
-| S. No. | Password | Dictionary attack result | Strength assessment |
+### 3. Initial Cracked Password (admin123)
+
+![Initial Cracked Password](Screenshots/03_Initial_Cracked_Password_admin123.png)
+
+### 4. RockYou Wordlist Download and Extraction
+
+![RockYou Wordlist Download and Extraction](Screenshots/04_RockYou_Wordlist_Download_and_Extraction.png)
+
+### 5. RockYou Dictionary Attack
+
+![RockYou Dictionary Attack](Screenshots/05_RockYou_Dictionary_Attack.png)
+
+### 6. Final Recovered Passwords
+
+![Final Recovered Passwords](Screenshots/06_Final_Recovered_Passwords.png)
+
+## 6. Analysis and Observations
+
+| S. No. | Password | Dictionary Attack Result | Strength Assessment |
 |---:|---|---|---|
 | 1 | `123456` | Not tested | Very Weak |
-| 2 | `password123` | Cracked | Weak |
-| 3 | `admin123` | Cracked during the initial audit | Weak |
-| 4 | `Cyber@2026` | Not cracked in the performed run | Moderate (as classified in the lab manual) |
+| 2 | `password123` | Cracked (RockYou dictionary attack) | Weak |
+| 3 | `admin123` | Cracked (initial audit) | Weak |
+| 4 | `Cyber@2026` | Not cracked in the performed run | Moderate |
 | 5 | `T9#mQ2$vLp8!` | Not tested | Strong |
 
-**Interpretation:** Two of the three generated sample hashes were recovered. `Cyber@2026` was not recovered in the attacks performed. This does not prove that it is impossible to crack; it means only that it was not found during this practical's runs. The passwords `123456` and `T9#mQ2$vLp8!` were included only in the manual's strength-evaluation examples and were not generated or tested.
+1. All three sample MD5 hashes were loaded successfully by John the Ripper.
+2. `admin123` was recovered during the initial audit.
+3. `password123` was recovered using the RockYou wordlist.
+4. `Cyber@2026` was not recovered. This does not prove it cannot be cracked; it was only not found in the attacks performed.
+5. `123456` and `T9#mQ2$vLp8!` were included only as strength-evaluation examples from the lab manual and were not tested.
 
-## Result
+## 7. Result
 
-The experiment demonstrated password auditing using John the Ripper. Three sample MD5 password hashes were generated and tested. The initial audit recovered `admin123`, and the RockYou dictionary attack recovered `password123`. The final report showed **2 password hashes cracked and 1 remaining**. The practical illustrated that common and predictable passwords are more likely to be found through dictionary-based attacks, while a password not found by a particular wordlist run is not necessarily immune to other attacks.
+Password auditing was successfully performed using John the Ripper. Three sample MD5 hashes were generated and tested. The initial audit recovered `admin123`, and the RockYou dictionary attack recovered `password123`. The final report showed **2 password hashes cracked and 1 remaining**.
 
-## Precautions
+## 8. Conclusion
 
-1. Perform password auditing only on systems and password hashes for which authorization has been granted.
+This experiment demonstrated that common and predictable passwords can be recovered quickly through dictionary-based attacks. Strong passwords that are long, random, and use a mix of character types are much harder to crack, although a password not found by one wordlist is not necessarily immune to other attacks.
+
+## 9. Precautions
+
+1. Perform password auditing only on systems and hashes for which authorization has been granted.
 2. Never use real user passwords for classroom demonstrations.
 3. Use sample password hashes for practical experiments.
 4. Avoid storing passwords in plaintext.
-5. Prefer secure password hashing algorithms such as Argon2id, bcrypt, or scrypt instead of MD5.
 
-## Security Note
+## 10. Security Note
 
-MD5 is used here only because the lab manual specifies it for a simple demonstration. MD5 is fast and unsuitable for storing real passwords. Real applications should use a dedicated password-hashing algorithm such as Argon2id, bcrypt, or scrypt, with appropriate parameters and unique salts.
-
-## Repository Contents
-
-```text
-Experiment13/
-├── README.md
-├── hashes.txt
-└── Screenshots/
-    ├── 01_MD5_Hash_Generation_and_Hashes_File.png
-    ├── 02_Initial_John_the_Ripper_Audit.png
-    ├── 03_Initial_Cracked_Password_admin123.png
-    ├── 04_RockYou_Wordlist_Download_and_Extraction.png
-    ├── 05_RockYou_Dictionary_Attack.png
-    └── 06_Final_Recovered_Passwords.png
-```
-
-The RockYou wordlist and its compressed archive are intentionally not included in this repository package because they are large files. Download and extract the wordlist separately when reproducing the dictionary attack.
+- MD5 is used here only because the lab manual specifies it for a simple demonstration. It is fast and unsuitable for storing real passwords.
+- Real applications should use dedicated password-hashing algorithms such as Argon2id, bcrypt, or scrypt, with unique salts.
+- The RockYou wordlist is not included in this repository because of its size. Download it separately to reproduce the dictionary attack.

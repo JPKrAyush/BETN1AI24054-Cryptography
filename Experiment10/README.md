@@ -2,97 +2,57 @@
 
 ## 1. Aim
 
-To capture and analyze HTTPS traffic using Wireshark and study the TLS (Transport Layer Security) handshake process, negotiated TLS version, cipher suite, and X.509 digital certificate.
+To capture and analyze HTTPS traffic using Wireshark and study the TLS (Transport Layer Security) handshake process, the negotiated TLS version, the cipher suite, and the X.509 digital certificate.
 
-## 2. Objectives
+## 2. Software and Tools Required
 
-- To capture HTTPS traffic using Wireshark.
-- To identify and analyze the TLS handshake messages.
-- To examine the Client Hello and Server Hello messages.
-- To identify the negotiated TLS version and cipher suite.
-- To analyze the X.509 digital certificate.
-- To understand the role of encryption and digital certificates in secure communication.
-
-## 3. Software and Requirements
-
-- Operating System: macOS
-- Wireshark: Network protocol analyzer
-- Google Chrome: Web browser
+- macOS
+- Wireshark (network protocol analyzer)
+- Google Chrome
 - Internet connection
-- TLS key log file for decrypting TLS handshake traffic
+- TLS key log file (for decrypting TLS handshake traffic)
 
-## 4. Introduction
+## 3. Theory
 
-HTTPS (Hypertext Transfer Protocol Secure) is a secure version of HTTP that uses TLS (Transport Layer Security) to protect communication between a web browser and a web server.
+### A. HTTPS and TLS
 
-TLS provides three important security features:
+HTTPS (Hypertext Transfer Protocol Secure) is HTTP protected by TLS (Transport Layer Security). TLS secures the communication between a web browser and a web server.
+
+TLS provides three important security properties:
 
 1. **Confidentiality:** Encrypts transmitted data to prevent unauthorized access.
 2. **Integrity:** Helps ensure that transmitted data has not been modified.
 3. **Authentication:** Uses digital certificates to verify the identity of the server.
 
-Wireshark is a network protocol analyzer that allows us to capture and inspect network packets. It can be used to study TLS handshake messages, encryption protocols, certificates, and other network communication details.
+Wireshark is a network protocol analyzer used to capture and inspect network packets, including TLS handshake messages, certificates, and other protocol details.
 
-## 5. Theory
+### B. TLS Handshake
 
-### 5.1 TLS Handshake
+The TLS handshake establishes a secure connection before application data is exchanged.
 
-The TLS handshake is the process through which a client and server establish a secure connection before exchanging application data.
+| Message | Purpose |
+|---|---|
+| **Client Hello** | Client sends supported TLS versions, cipher suites, client random, extensions, and Server Name Indication (SNI). |
+| **Server Hello** | Server selects the TLS version and cipher suite, and sends the server random and key exchange information. |
+| **Certificate** | Server sends its digital certificate to prove its identity. |
+| **Certificate Verify** | Server proves that it holds the private key matching its certificate. |
+| **Finished** | Both parties confirm the integrity of the handshake. |
 
-The main handshake messages include:
+In TLS 1.3, the handshake messages after Server Hello are encrypted. A TLS key log file is therefore configured in Wireshark to decrypt them for analysis.
 
-**1. Client Hello**
-
-The client initiates communication by sending a Client Hello message. It contains:
-
-- Supported TLS versions
-- Supported cipher suites
-- Client random value
-- Extensions
-- Server Name Indication (SNI)
-
-**2. Server Hello**
-
-The server responds with a Server Hello message. It contains:
-
-- Selected TLS version
-- Selected cipher suite
-- Server random value
-- Key exchange information
-
-**3. Certificate**
-
-The server sends its digital certificate to establish its identity. The certificate contains information about the subject, issuer, validity period, and public key.
-
-**4. Certificate Verify**
-
-The server provides cryptographic proof that it possesses the private key corresponding to its certificate.
-
-**5. Finished**
-
-Both parties send Finished messages to verify the integrity of the handshake and confirm that the secure connection has been established.
-
-In TLS 1.3, several handshake messages after Server Hello are encrypted. Therefore, a TLS key log file can be configured in Wireshark to decrypt the captured traffic for analysis.
-
-### 5.2 Cipher Suite
+### C. Cipher Suite
 
 A cipher suite defines the cryptographic algorithms used to secure communication.
 
-For example:
+**Example:** `TLS_AES_256_GCM_SHA384`
 
-`TLS_AES_256_GCM_SHA384`
+- **AES-256:** Symmetric encryption.
+- **GCM:** Authenticated encryption mode.
+- **SHA-384:** Hash function used in the TLS key schedule.
 
-It uses:
+### D. X.509 Digital Certificate
 
-- AES-256 for symmetric encryption.
-- GCM for authenticated encryption.
-- SHA-384 for the hash function used in the TLS key schedule.
-
-### 5.3 Digital Certificate (X.509)
-
-An X.509 digital certificate is used to associate a public key with an identity.
-
-It contains information such as:
+An X.509 certificate binds a public key to an identity. It contains:
 
 - Certificate version
 - Serial number
@@ -102,25 +62,55 @@ It contains information such as:
 - Public key algorithm
 - Signature algorithm
 
-The certificate is digitally signed by a Certificate Authority (CA) to help establish trust.
+The certificate is digitally signed by a Certificate Authority (CA) to establish trust.
 
-## 6. Procedure
+## 4. Working Procedure and Commands
 
-1. Install and open Wireshark.
-2. Configure Google Chrome to generate a TLS key log file.
-3. Configure Wireshark to use the generated TLS key log file.
-4. Select the active Wi-Fi network interface in Wireshark.
-5. Start packet capture.
-6. Open Google Chrome and visit `https://www.google.com`.
-7. Refresh the webpage to generate HTTPS traffic.
-8. Stop the packet capture.
-9. Apply the display filter `tls` to identify TLS traffic.
-10. Locate and inspect the Client Hello message.
-11. Examine the Server Hello message and identify the negotiated TLS version and cipher suite.
-12. Inspect the Certificate handshake message to analyze the X.509 certificate.
-13. Apply the filter `tcp.stream == 6` to examine the captured TCP connection and its handshake sequence.
+### Step 1: Install and open Wireshark
 
-## 7. Wireshark Display Filters
+Install Wireshark and launch it on macOS.
+
+### Step 2: Configure Chrome to generate a TLS key log file
+
+Set the `SSLKEYLOGFILE` environment variable so that Chrome writes TLS session keys to a file.
+
+### Step 3: Configure Wireshark to use the key log file
+
+In Wireshark, open **Preferences → Protocols → TLS** and set the **(Pre)-Master-Secret log filename** to the generated key log file.
+
+### Step 4: Start the packet capture
+
+Select the active Wi-Fi interface and start capturing packets.
+
+### Step 5: Generate HTTPS traffic
+
+Open Google Chrome, visit `https://www.google.com`, and refresh the page.
+
+### Step 6: Stop the capture and filter TLS traffic
+
+Stop the capture and apply the display filter:
+
+```text
+tls
+```
+
+### Step 7: Inspect the Client Hello and Server Hello
+
+Locate the Client Hello message, then inspect the Server Hello to identify the negotiated TLS version and cipher suite.
+
+### Step 8: Analyze the X.509 certificate
+
+Inspect the Certificate handshake message to view the certificate details.
+
+### Step 9: Examine the complete handshake
+
+Apply the following filter to follow the full TCP connection:
+
+```text
+tcp.stream == 6
+```
+
+### Wireshark Display Filters Used
 
 | Display Filter | Purpose |
 |---|---|
@@ -130,24 +120,38 @@ The certificate is digitally signed by a Certificate Authority (CA) to help esta
 | `tls.handshake.type == 11` | Displays Certificate messages |
 | `tcp.stream == 6` | Displays packets belonging to TCP stream 6 |
 
-## 8. Observations and Results
+## 5. Screenshots
 
-### 8.1 Client Hello
+### 1. Captured TLS Traffic
 
-The Client Hello message was captured successfully.
+![Captured TLS Traffic](Screenshots/Exp10_01_TLS_Traffic.png)
 
-Observed details:
+### 2. Client Hello Message
+
+![Client Hello](Screenshots/Exp10_02_Client_Hello.png)
+
+### 3. Server Hello and Negotiated Cipher Suite
+
+![Server Hello](Screenshots/Exp10_03_Server_Hello.png)
+
+### 4. X.509 Certificate Details
+
+![Certificate Details](Screenshots/Exp10_04_Certificate_Details.png)
+
+### 5. Complete TLS Handshake Sequence
+
+![TLS Handshake](Screenshots/Exp10_05_TLS_Handshake.png)
+
+## 6. Analysis and Observations
+
+### A. Client Hello
 
 - Handshake Type: Client Hello
 - Server Name Indication: `www.gstatic.com`
 - Supported TLS Versions: TLS 1.3 and TLS 1.2
 - Supported Key Shares: X25519MLKEM768 and X25519
 
-### 8.2 Server Hello
-
-The Server Hello message was successfully identified.
-
-Observed details:
+### B. Server Hello
 
 - Handshake Type: Server Hello
 - Negotiated TLS Version: TLS 1.3
@@ -155,11 +159,7 @@ Observed details:
 - Compression Method: Null
 - Key Share: X25519MLKEM768
 
-### 8.3 X.509 Certificate Analysis
-
-The certificate was successfully decrypted and inspected using Wireshark.
-
-Observed certificate details:
+### C. X.509 Certificate
 
 | Certificate Field | Observed Value |
 |---|---|
@@ -173,9 +173,7 @@ Observed certificate details:
 | Elliptic Curve | secp256r1 |
 | Signature Algorithm | ECDSA with SHA-256 |
 
-### 8.4 TLS Handshake Analysis
-
-The captured TCP stream (Stream 6) showed the following handshake sequence:
+### D. TLS Handshake Sequence (TCP Stream 6)
 
 | Packet Number | Observed Message |
 |---|---|
@@ -185,30 +183,18 @@ The captured TCP stream (Stream 6) showed the following handshake sequence:
 | 269 | Change Cipher Spec, Encrypted Extensions, Finished |
 | 293 | HTTP/2 communication |
 
-The handshake messages were successfully inspected after configuring TLS decryption in Wireshark.
+The encrypted handshake messages were inspected after configuring TLS decryption in Wireshark.
 
-## 9. Screenshots
+## 7. Result
 
-The following screenshots were captured during the experiment:
+HTTPS traffic was successfully captured and analyzed using Wireshark. The Client Hello and Server Hello messages were identified, the negotiated TLS 1.3 version and cipher suite were verified, and the X.509 certificate was examined, including its subject, issuer, validity period, public key algorithm, and signature algorithm.
 
-1. `Exp10_01_TLS_Traffic.png` – Captured HTTPS/TLS network traffic.
-2. `Exp10_02_Client_Hello.png` – Client Hello message and its parameters.
-3. `Exp10_03_Server_Hello.png` – Server Hello message and negotiated cipher suite.
-4. `Exp10_04_Certificate_Details.png` – X.509 certificate information.
-5. `Exp10_05_TLS_Handshake.png` – Complete captured TLS handshake sequence.
+## 8. Conclusion
 
-## 10. Result
+This experiment demonstrated the TLS handshake process by examining the Client Hello, Server Hello, Certificate, and Finished messages. It showed how TLS provides confidentiality, integrity, and authentication during secure network communication, and how digital certificates establish trust in the server's identity.
 
-Successfully captured and analyzed HTTPS traffic using Wireshark. Identified the Client Hello and Server Hello messages, verified the negotiated TLS 1.3 version and cipher suite, and examined the X.509 digital certificate, including its subject, issuer, validity period, public key algorithm, and signature algorithm.
+## 9. Security Note
 
-The TLS handshake process and the role of digital certificates in establishing secure communication were successfully studied.
-
-## 11. Conclusion
-
-In this experiment, HTTPS traffic was captured and analyzed using Wireshark. The TLS handshake process was studied by examining the Client Hello, Server Hello, Certificate, and Finished messages.
-
-The negotiated TLS version, cipher suite, and X.509 certificate details were successfully identified. This experiment helped in understanding how TLS provides confidentiality, integrity, and authentication during secure network communication.
-
----
-
-**End of Experiment 10**
+- A TLS key log file contains session secrets that can decrypt captured traffic. Keep it private and delete it after the experiment.
+- Unset `SSLKEYLOGFILE` after the experiment so the browser stops logging keys.
+- Packet captures can contain IP addresses, hostnames, and other metadata. Review them before sharing.
